@@ -53,3 +53,23 @@ Route::prefix('public')->group(function () {
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
     Route::get('/activity-logs', [ActivityLogController::class, 'index']);
 });
+
+// Admin Database Auto-Migration & Seeding Trigger for Cloud Deployments
+Route::get('/migrate-db', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate:fresh', [
+            '--seed' => true,
+            '--force' => true,
+        ]);
+        return response()->json([
+            'success' => true,
+            'message' => 'Database migrated and seeded successfully on TiDB Cloud!',
+            'output' => \Illuminate\Support\Facades\Artisan::output(),
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage(),
+        ], 500);
+    }
+});

@@ -16,6 +16,8 @@ RUN apk add --no-cache \
     libpng-dev \
     oniguruma-dev \
     supervisor \
+    ca-certificates \
+    && update-ca-certificates \
     && docker-php-ext-install pdo_mysql bcmath opcache
 
 # Install Composer
@@ -40,6 +42,10 @@ COPY nginx.conf /etc/nginx/http.d/default.conf
 RUN mkdir -p /etc/supervisor/conf.d
 RUN echo -e '[supervisord]\nnodaemon=true\nuser=root\n\n[program:php-fpm]\ncommand=php-fpm -F\nautostart=true\nautorestart=true\n\n[program:nginx]\ncommand=nginx -g "daemon off;"\nautostart=true\nautorestart=true' > /etc/supervisor/conf.d/supervisord.conf
 
+# Entrypoint to automate database migrations on boot
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
 EXPOSE 80
 
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
